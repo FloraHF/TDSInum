@@ -1,4 +1,4 @@
-import tensorflow as tf
+import tensorflow as tsf
 import os
 import numpy as np
 from math import pi
@@ -23,7 +23,7 @@ class ValueFunc(object):
         self.act_fns = act_fns + [None]
         self.tau = tau
         
-        self.sess = tf.InteractiveSession()
+        self.sess = tsf.InteractiveSession()
         self.create_placeholders()
         self.fitting_graph()
         self.fitting_ops()
@@ -33,7 +33,7 @@ class ValueFunc(object):
         self.pde_graph()
         self.pde_ops()
         self.target_update_ops()
-        self.saver = tf.train.Saver()
+        self.saver = tsf.train.Saver()
 
         self.save_file = Config.MODEL_FILE
         if save_dir != '':
@@ -42,45 +42,45 @@ class ValueFunc(object):
                 os.makedirs(self.save_dir)
             
         self.start_step = 0
-        self.sess.run(tf.global_variables_initializer())
+        self.sess.run(tsf.global_variables_initializer())
 
         if read_dir != '':
             self.start_step = self.restore_model(read_dir+'value_fn/')      
         
     def V_net(self, x, n, act_fns, name=''):
         
-        with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
+        with tsf.variable_scope(name, reuse=tsf.AUTO_REUSE):
             for i in range(len(n)):
                 if i == 0:
-                    w = tf.get_variable(name='w_'+str(i), shape=(3, n[i]),
-                                        initializer=tf.contrib.layers.xavier_initializer())
-                    out = tf.matmul(x, w)
+                    w = tsf.get_variable(name='w_'+str(i), shape=(3, n[i]),
+                                        initializer=tsf.contrib.layers.xavier_initializer())
+                    out = tsf.matmul(x, w)
                 else:
-                    w = tf.get_variable(name='w_'+str(i), shape=(n[i-1], n[i]),
-                                        initializer=tf.contrib.layers.xavier_initializer()) # tf.random_normal_initializer() tf.contrib.layers.xavier_initializer()
-                    out = tf.matmul(out, w)
+                    w = tsf.get_variable(name='w_'+str(i), shape=(n[i-1], n[i]),
+                                        initializer=tsf.contrib.layers.xavier_initializer()) # tf.random_normal_initializer() tf.contrib.layers.xavier_initializer()
+                    out = tsf.matmul(out, w)
                     
-                b = tf.get_variable(name='b_'+str(i), shape=(n[i]),
-                                    initializer=tf.zeros_initializer())
-                out = tf.add(out, b)
+                b = tsf.get_variable(name='b_'+str(i), shape=(n[i]),
+                                    initializer=tsf.zeros_initializer())
+                out = tsf.add(out, b)
                 if act_fns[i] is not None:
                     out = act_fns[i](out)
         return out 
     
     def create_placeholders(self):
-        self.s_ph = tf.placeholder(tf.float32, [None, 3], name='state_ph')
-        self.b_ph = tf.placeholder(tf.float32, [None, 3], name='boundary_state_ph')
-        self.v_ph = tf.placeholder(tf.float32, [None, 1], name='value_ph')        
+        self.s_ph = tsf.placeholder(tsf.float32, [None, 3], name='state_ph')
+        self.b_ph = tsf.placeholder(tsf.float32, [None, 3], name='boundary_state_ph')
+        self.v_ph = tsf.placeholder(tsf.float32, [None, 1], name='value_ph')        
 
     def fitting_graph(self):
         self.v = self.V_net(self.s_ph, self.layer_sizes, self.act_fns, name='value')
-        self.n = tf.gradients(self.v, self.s_ph)[0]
-        self.fitting_loss = tf.reduce_mean((self.v_ph - self.v)**2)
+        self.n = tsf.gradients(self.v, self.s_ph)[0]
+        self.fitting_loss = tsf.reduce_mean((self.v_ph - self.v)**2)
     
     def fitting_ops(self):
-        self.fitter = tf.train.AdamOptimizer(learning_rate=self.lr, name='fit_V')
+        self.fitter = tsf.train.AdamOptimizer(learning_rate=self.lr, name='fit_V')
         self.fit_op = self.fitter.minimize(self.fitting_loss, 
-                                           var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'value'))
+                                           var_list=tsf.get_collection(tsf.GraphKeys.TRAINABLE_VARIABLES, 'value'))
         
     def fit(self, batch):
         feed_dict = {self.s_ph: batch['states'],
@@ -96,40 +96,40 @@ class ValueFunc(object):
         # n = tf.multiply(n, sgn)
         
         cphi_1 = n[:,0]
-        sphi_1 = - tf.divide(n[:,2], s[:,0])
-        phi_1 = tf.atan2(sphi_1, cphi_1)
+        sphi_1 = - tsf.divide(n[:,2], s[:,0])
+        phi_1 = tsf.atan2(sphi_1, cphi_1)
         
         cphi_2 = n[:,1]
-        sphi_2 = tf.divide(n[:,2], s[:,1])
-        phi_2 = tf.atan2(sphi_2, cphi_2)  
+        sphi_2 = tsf.divide(n[:,2], s[:,1])
+        phi_2 = tsf.atan2(sphi_2, cphi_2)  
         
-        rho_1 = tf.sqrt(tf.square(cphi_1) + tf.square(sphi_1))
-        rho_2 = tf.sqrt(tf.square(cphi_2) + tf.square(sphi_2))
+        rho_1 = tsf.sqrt(tsf.square(cphi_1) + tsf.square(sphi_1))
+        rho_2 = tsf.sqrt(tsf.square(cphi_2) + tsf.square(sphi_2))
         
-        cpsi_a = tf.multiply(rho_1, tf.cos(phi_1 - s[:,2]))
-        cpsi_b = tf.multiply(rho_2, tf.cos(phi_2))
+        cpsi_a = tsf.multiply(rho_1, tsf.cos(phi_1 - s[:,2]))
+        cpsi_b = tsf.multiply(rho_2, tsf.cos(phi_2))
         cpsi = -(cpsi_a + cpsi_b)
         
-        spsi_a = tf.multiply(rho_1, tf.sin(phi_1 - s[:,2]))
-        spsi_b = tf.multiply(rho_2, tf.sin(phi_2))
+        spsi_a = tsf.multiply(rho_1, tsf.sin(phi_1 - s[:,2]))
+        spsi_b = tsf.multiply(rho_2, tsf.sin(phi_2))
         spsi = -(spsi_a + spsi_b)
-        psi = tf.atan2(spsi, cpsi)
+        psi = tsf.atan2(spsi, cpsi)
         
-        phi = tf.stack([phi_1, phi_2], axis=1)
+        phi = tsf.stack([phi_1, phi_2], axis=1)
         
         return phi, psi
     
     def dx_model(self, x, phi, psi):
 
-        dd1 = -(vi*tf.cos(x[:,2] + psi) + vd*tf.cos(phi[:,0]))
+        dd1 = -(vi*tsf.cos(x[:,2] + psi) + vd*tsf.cos(phi[:,0]))
 
-        dd2 = -(vi*tf.cos(psi)          + vd*tf.cos(phi[:,1]))
+        dd2 = -(vi*tsf.cos(psi)          + vd*tsf.cos(phi[:,1]))
         
-        dtht_a = vd*tf.sin(phi[:,0]) + vi*tf.sin(x[:,2] + psi)
-        dtht_b = vd*tf.sin(phi[:,1]) + vi*tf.sin(psi)
-        dtht = tf.divide(dtht_a, x[:,0]) - tf.divide(dtht_b, x[:,1])
+        dtht_a = vd*tsf.sin(phi[:,0]) + vi*tsf.sin(x[:,2] + psi)
+        dtht_b = vd*tsf.sin(phi[:,1]) + vi*tsf.sin(psi)
+        dtht = tsf.divide(dtht_a, x[:,0]) - tsf.divide(dtht_b, x[:,1])
         
-        dx = tf.stack([dd1, dd2, dtht], 1)
+        dx = tsf.stack([dd1, dd2, dtht], 1)
         
         return dx
     
@@ -139,28 +139,28 @@ class ValueFunc(object):
         
     def bd_graph(self):
         v_bd = self.V_net(self.b_ph, self.layer_sizes, self.act_fns, name='value')
-        self.bd_err = tf.reduce_mean((v_bd - self.v_ph)**2)
+        self.bd_err = tsf.reduce_mean((v_bd - self.v_ph)**2)
         
     def learning_graph(self):
         
         self.v_target = self.V_net(self.s_ph, self.layer_sizes, self.act_fns, name='target_value')
-        self.n_target = tf.gradients(self.v_target, self.s_ph)[0]
+        self.n_target = tsf.gradients(self.v_target, self.s_ph)[0]
         self.phi, self.psi = self.SS_policy(self.s_ph, self.n_target)
         s_next = self.dyn_model(self.s_ph, self.phi, self.psi)
         self.v_next = self.V_net(s_next, self.layer_sizes, self.act_fns, name='target_value')
-        self.td_err = tf.reduce_mean((self.v - self.v_next)**2)
+        self.td_err = tsf.reduce_mean((self.v - self.v_next)**2)
         
         self.learning_loss = self.td_err + self.bd_err
 
     def learning_ops(self):
-        self.trainer = tf.train.AdamOptimizer(learning_rate=self.lr, name='train_V')
+        self.trainer = tsf.train.AdamOptimizer(learning_rate=self.lr, name='train_V')
         self.train_op = self.trainer.minimize(self.learning_loss, 
-                                                var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'value'))
+                                                var_list=tsf.get_collection(tsf.GraphKeys.TRAINABLE_VARIABLES, 'value'))
     
     def target_update_ops(self):
-        source_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'value')
-        target_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'target_value')
-        self.target_op = [tf.assign(target, (1 - self.tau) * target + self.tau * source)
+        source_params = tsf.get_collection(tsf.GraphKeys.TRAINABLE_VARIABLES, 'value')
+        target_params = tsf.get_collection(tsf.GraphKeys.TRAINABLE_VARIABLES, 'target_value')
+        self.target_op = [tsf.assign(target, (1 - self.tau) * target + self.tau * source)
                                      for target, source in zip(target_params, source_params)]
         
     def train(self, in_batch, bd_batch):
@@ -179,14 +179,14 @@ class ValueFunc(object):
         dx = self.dx_model(self.s_ph, self.phi, self.psi)
         
 #        v2 = self.V_net(self.s_ph, self.layer_sizes, self.act_fns, name='value')
-        dv = tf.reduce_sum(tf.gradients(self.v, self.s_ph, grad_ys=dx), -1)
+        dv = tsf.reduce_sum(tsf.gradients(self.v, self.s_ph, grad_ys=dx), -1)
         
-        self.pde_loss = tf.reduce_mean(tf.square(dv)) + self.bd_err
+        self.pde_loss = tsf.reduce_mean(tsf.square(dv)) + self.bd_err
         
     def pde_ops(self):
-        self.pder = tf.train.AdamOptimizer(learning_rate=self.lr, name='pde_V')
+        self.pder = tsf.train.AdamOptimizer(learning_rate=self.lr, name='pde_V')
         self.pde_op = self.pder.minimize(self.pde_loss, 
-                                                var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'value'))
+                                                var_list=tsf.get_collection(tsf.GraphKeys.TRAINABLE_VARIABLES, 'value'))
     
     def train_pde(self, in_batch, bd_batch):
         feed_dict={self.s_ph: in_batch['states'],
@@ -236,7 +236,7 @@ class ValueFunc(object):
 
     def restore_model(self, read_dir):
         print(read_dir)
-        dirct = tf.train.latest_checkpoint(read_dir)
+        dirct = tsf.train.latest_checkpoint(read_dir)
         episode = int(dirct.split('-')[-1])
         self.saver.restore(self.sess, dirct)
         return episode

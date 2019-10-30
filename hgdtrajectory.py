@@ -196,7 +196,7 @@ def get_min_gamma():
 #     else:
 #         return x, None, ds, time
     
-def dwin_SS_traj(delta, phi, t=20, Nt=30, gmm=LB/2):
+def dwin_SS_traj(delta, phi, t=5, Nt=30, gmm=LB/2):
     
 #    print('new trajectory')
     

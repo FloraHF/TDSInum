@@ -64,7 +64,7 @@ def h_strategy(x):
 	D2_P = P - np.concatenate((x_[2:4], [0]))
 	I_P  = P - np.concatenate((x_[4:6], [0]))
 	D1_I, D2_I, D1_D2 = get_vecs(x_)
-	print(I_P)
+	# print(I_P)
 
 	phi_1 = atan2(np.cross(D1_I, D1_P)[-1], np.dot(D1_I, D1_P))
 	phi_2 = atan2(np.cross(D2_I, D2_P)[-1], np.dot(D2_I, D2_P))
@@ -110,7 +110,7 @@ def s_strategy(x):
 		print('curved')
 		res = minimize_scalar(delta, bounds=[0.01, pi/1.5], method='bounded')
 		Omega = res.x
-		print(Omega)
+		# print(Omega)
 		phi_2 = pi - get_K(Omega) - (LB/2 + Omega/2) + B
 	else:
 		print('straight')
@@ -139,7 +139,7 @@ def i_strategy(x):
 def m_strategy(x):
 	s = phy_to_xyz(x)
 	if s[0]<-0.8*Config.VI:
-		print('h')
+		# print('h')
 		return h_strategy(x)
 	else:
 		return i_strategy(x)

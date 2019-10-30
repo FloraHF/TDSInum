@@ -42,7 +42,7 @@ class TDSIGame():
         self.pcount = self.dcount + self.icount
         self.l = Config.CAP_RANGE
         self.x_generator = InitialLocationGenerator()
-        self.Vfn = ValueFunc(read_dir=vfunc_dir)
+        # self.Vfn = ValueFunc(read_dir=vfunc_dir)
         
         self.x_0 = x_0
         self._p = [None, None, None]
@@ -133,8 +133,11 @@ class TDSIGame():
             p[2] = -d[2]/2
         elif abs(l-d[0]) < close: # in D1's range
             print('close')
-            p[0] = 0.8*self._p[0]
-            p[2] = pi - d[2] - (-p[0] + LB/2 - 0.6)
+            p[0] = 0.99*self._p[0]
+            psi = acos(vd*cos(p[0])/vi)
+            psi = -abs(psi)
+            p[2] = pi - d[2] + psi
+            # p[2] = pi - d[2] - (-p[0] + LB/2 - 0.6)
         # elif abs(r-x[1]) < 0.005*r:
         #     p[2] = -(pi - LB/2)
         #     p[1] = 0

@@ -5,10 +5,10 @@ from math import acos
 ##################################### CONFIG #######################################
 class Config(object):
     ###============ player params =========
-    CAP_RANGE = 2
-    VD = 1.
-    VI = 1.5
-    TIME_STEP = 0.09
+    CAP_RANGE = .2
+    VD = .2
+    VI = .3
+    TIME_STEP = 0.05
     
 
     LB = 2*acos(VD/VI)

@@ -30,7 +30,6 @@ class Replay(object):
         self.res_dir = res_dir
         if not os.path.exists(res_dir):
             os.makedirs(res_dir)
-
         self.prefix = vfunc_dir.split('_')[0] + '_'
 
     def conv(self):
@@ -78,6 +77,13 @@ class Replay(object):
         ax.grid()
         plt.show()
 
+    def _log_traj(self, xs, file_name):
+        O, C = phy_to_hds(xs)
+        xs = traj_to_hds(xs, O, C)
+        with open(file_name, 'a') as f:
+            for x in xs:
+                f.write(','.join(list(map(str, x))) + '\n')
+
     def _plot_traj(self, xs_anl, xs_ply, fig_title, file_name, fontsize=16, dlabel='', ilabel=''):
 
         O, C = phy_to_hds(xs_anl)
@@ -100,6 +106,7 @@ class Replay(object):
         
         plot_traj_phy(ax, xs_anl, line_style=(0, (5, 5)), dlabel='optimal', ilabel='optimal', skip=1)
         plot_traj_phy(ax, xs_ply, marker=True, skip=30, connect=True, dlabel=dlabel, ilabel=ilabel)
+
         plt.gcf().subplots_adjust(bottom=0.15, left=0.12)
         ax.set_yticks(ax.get_yticks()[::1])
         ax.grid()
@@ -176,7 +183,7 @@ class Replay(object):
         ax.set_aspect('equal')
         ax.grid()
         ax.tick_params(axis = 'both', which = 'major', labelsize = 16)
-        plot_traj_phy(ax, xs_anl, line_style=(0, (5, 5)), label='optimal', skip=50)
+        plot_traj_phy(ax, xs_anl, line_style=(0, (5, 5)), dlabel='optimal', skip=50)
         # plot_traj_phy(ax, xs_ply, line_style=(0, (5, 5)), label='Vfn', skip=50)
         plt.xlabel('x', fontsize=16)
         plt.ylabel('y', fontsize=16)
@@ -272,7 +279,7 @@ class Replay(object):
         ani.save(file_name)
         # plt.show()
 
-    def dwin_traj(self, delta, T, gmm, t=10 , Nt=40, policies=[None, None, None], dlabel='', ilabel='', traj=False, animate=False, value=False):
+    def dwin_traj(self, delta, T, gmm, t=5 , Nt=40, policies=[None, None, None], dlabel='', ilabel='', traj=False, animate=False, value=False):
 
         sub_dir = self.res_dir + '/' + 'gmm_%.2f'%(gmm) + '_delta_%.2f_'%(delta) + '_T_%.2f'%(T) + '/'
         p_name = ''
@@ -297,6 +304,8 @@ class Replay(object):
         # self._plot_alpha(ss_anl)
 
         if traj:
+            self._log_traj(xs_anl, name+'_anl.csv')
+            self._log_traj(xs_vfn, name+'_ply.csv')
             self._plot_traj(xs_anl, xs_vfn, fig_title+info, name+'traj'+'.png', dlabel=dlabel, ilabel=ilabel)
         if animate:
             self._animate_traj(xs_anl, xs_vfn, ts_anl, ts_vfn, name+'traj'+'.gif')    
@@ -326,6 +335,8 @@ class Replay(object):
         xs_vfn, ss_vfn, ds_vfn, ts_vfn, info = self.game.advance(450, policies=policies)
 
         self._plot_traj(xs_anl, xs_vfn, fig_title+info, name+'traj'+'.png', dlabel=dlabel, ilabel=ilabel)
+        self._log_traj(xs_anl, name+'_anl.csv')
+        self._log_traj(xs_vfn, name+'_ply.csv')
         if animate:
             self._animate_traj(xs_anl, xs_vfn, ts_anl, ts_vfn, name+'traj'+'.gif') 
 
@@ -376,7 +387,7 @@ replay = Replay(vfunc_dir='fitted_v/', res_dir='replay')
 
 
 # replay.terminal_value()
-replay.dwin_traj(0, LB+0.5, LB/2, policies=[m_strategy]*2 + [m_strategy], dlabel='proposed', ilabel='proposed', traj=True)
+replay.dwin_traj(0.0999999, LB+0.4, LB/2+0.1, policies=[s_strategy]*2 + [s_strategy], dlabel='proposed', ilabel='proposed', traj=True)
 # replay.dwin_traj(0.1999999, LB, LB/2+0.2, policies=[s_strategy]*2+[s_strategy], animate=True)
 # replay.dwin_traj(0.1, 1, LB/2+0.2, policies=[s_strategy]*2+[s_strategy], traj=True)
 # replay.iwin_traj(pi-LB+0.1, pi/2+0.2, L=100., nT=20, length=0.5, policies=[h_strategy]*2+[i_strategy], dlabel='S1', ilabel='S2')
